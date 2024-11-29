@@ -1,5 +1,15 @@
 Flask
 Flask_Cors
+torch
+langchain
+langchain-community
+huggingface-hub
+InstructorEmbedding
+sentence-transformers
+pypdf
+chromadb
+
+
 pdf2image
 chromadb
 pypdf
