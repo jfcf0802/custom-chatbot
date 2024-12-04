@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #chat-container {
+            width: 80%;
+            max-width: 600px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #chat-log {
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-bubble {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .chat-bubble img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        .chat-bubble.bot {
+            flex-direction: row;
+        }
+        .chat-bubble.user {
+            flex-direction: row-reverse;
+        }
+        .chat-message {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 8px;
+            color: #fff;
+            line-height: 1.5;
+        }
+        .chat-message.bot {
+            background-color: #007bff;
+        }
+        .chat-message.user {
+            background-color: #28a745;
+        }
+        #input-container {
+            display: flex;
+            padding: 10px;
+            gap: 10px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+        }
+        #message {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        async function sendMessage() {
+            const message = document.getElementById("message").value;
+            if (!message.trim()) return;
+
+            // Append user's message to the chat log
+            const chatLog = document.getElementById("chat-log");
+            const userBubble = `
+                <div class="chat-bubble user">
+                    <div class="chat-message user">${message}</div>
+                    <img src="https://via.placeholder.com/40?text=U" alt="User">
+                </div>`;
+            chatLog.innerHTML += userBubble;
+
+            // Scroll chat log to the bottom
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            // Send the message to the chatbot
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
+            const data = await response.json();
+
+            // Append chatbot's response to the chat log
+            const botBubble = `
+                <div class="chat-bubble bot">
+                    <img src="https://via.placeholder.com/40?text=B" alt="Bot">
+                    <div class="chat-message bot">${data.response}</div>
+                </div>`;
+            chatLog.innerHTML += botBubble;
+
+            // Scroll chat log to the bottom
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            // Clear the input field
+            document.getElementById("message").value = "";
+        }
+    </script>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-log"></div>
+        <div id="input-container">
+            <input type="text" id="message" placeholder="Type your message here..." />
+            <button id="send-button" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</body>
+</html>
