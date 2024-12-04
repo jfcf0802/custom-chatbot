@@ -12,10 +12,19 @@ def home():
 def chat():
     global conversation_history
     data = request.json
-    user_input = data["message"]
+    user_input = data.get("message", "")  # Ensure the key exists
+
+    print(f"User input: {user_input}")  # Debug user input
+
+    if not user_input:
+        return jsonify({"response": "Please provide a message."})
 
     response, conversation_history = get_conversation_response(user_input, conversation_history)
+
+    print(f"Bot response: {response}")  # Debug bot response
+
     return jsonify({"response": response})
+
 
 if __name__ == "__main__":
     app.run(debug=False)

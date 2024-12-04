@@ -2,24 +2,117 @@
 <html>
 <head>
     <title>Flask Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        #chat-container {
+            width: 60%;
+            margin: 0 auto;
+        }
+        #chat-log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            background-color: white;
+        }
+        .chat-bubble {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .user-message {
+            background-color: #d4f5d4;
+            color: #333;
+            padding: 10px;
+            border-radius: 10px;
+            margin-left: auto;
+            max-width: 70%;
+        }
+        .bot-message {
+            background-color: #d9e9ff;
+            color: #333;
+            padding: 10px;
+            border-radius: 10px;
+            margin-right: auto;
+            max-width: 70%;
+        }
+        .chat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 10px;
+        }
+        #message-container {
+            margin-top: 10px;
+        }
+        #message {
+            width: 80%;
+            padding: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
     <script>
         async function sendMessage() {
             const message = document.getElementById("message").value;
 
+            if (!message.trim()) {
+                return; // Prevent empty messages
+            }
+
             const response = await fetch("/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({ message }),
             });
+
             const data = await response.json();
-            document.getElementById("chat-log").innerHTML += `<p><strong>You:</strong> ${message}</p><p><strong>Bot:</strong> ${data.response}</p>`;
+
+            const chatLog = document.getElementById("chat-log");
+
+            // Add user message
+            chatLog.innerHTML += `
+                <div class="chat-bubble">
+                    <div class="user-message">${message}</div>
+                    <img src="https://via.placeholder.com/40/green" class="chat-icon" alt="User">
+                </div>
+            `;
+
+            // Add bot message
+            chatLog.innerHTML += `
+                <div class="chat-bubble">
+                    <img src="https://via.placeholder.com/40/blue" class="chat-icon" alt="Bot">
+                    <div class="bot-message">${data.response}</div>
+                </div>
+            `;
+
+            chatLog.scrollTop = chatLog.scrollHeight; // Scroll to the bottom
+
+            document.getElementById("message").value = ""; // Clear input field
         }
     </script>
 </head>
 <body>
-    <h1>Flask Chatbot</h1>
-    <input type="text" id="message" placeholder="Your message">
-    <button onclick="sendMessage()">Send</button>
-    <div id="chat-log"></div>
+    <div id="chat-container">
+        <h1>Chatbot</h1>
+        <div id="chat-log"></div>
+        <div id="message-container">
+            <input type="text" id="message" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
 </body>
 </html>
