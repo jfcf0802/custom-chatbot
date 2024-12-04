@@ -1,9 +1,7 @@
 from flask import Flask, request, jsonify, render_template
-from model import get_conversation_response
+from model_1 import get_conversation_response
 
 app = Flask(__name__)
-
-# Initialize conversation history
 conversation_history = None
 
 @app.route("/")
@@ -16,7 +14,6 @@ def chat():
     data = request.json
     user_input = data["message"]
 
-    # Get the bot's response and updated history
     response, conversation_history = get_conversation_response(user_input, conversation_history)
     return jsonify({"response": response})
 
