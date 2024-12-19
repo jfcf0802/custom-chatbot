@@ -5,13 +5,12 @@ import os
 # Set up the environment variable for HuggingFace and initialize the desired model.
 HF_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-conversation_model_name =  "meta-llama/Llama-3.1-8B-Instruct" # "meta-llama/Llama-3.2-1B-Instruct" # "meta-llama/Llama-3.1-8B-Instruct" # "meta-llama/Meta-Llama-3-8B" # "microsoft/DialoGPT-medium" # "bigscience/bloom" # 
+conversation_model_name =  "meta-llama/Llama-3.2-3B-Instruct" 
 conversation_tokenizer = AutoTokenizer.from_pretrained(conversation_model_name, token=HF_TOKEN)
 conversation_model = AutoModelForCausalLM.from_pretrained(conversation_model_name, token=HF_TOKEN)
 
 def get_conversation_response(prompt, history):
     if history==None:
-        # prompt = f"You are a helpful assistant. Answer the user's question or respond to their statement.\n\nUser: {prompt}\nAssistant:"
         prompt = (
             f"### Instructions ###\n"
             f"You are a helpful assistant. Answer the user's question or respond to their statement: {prompt}.\n"
@@ -37,13 +36,7 @@ def get_conversation_response(prompt, history):
         pad_token_id=conversation_tokenizer.eos_token_id
     )
     
-    # print(f'response 1: {response}')
-    
     response = conversation_tokenizer.decode(response[:, bot_input_ids.shape[-1]:][0], skip_special_tokens=True)
-    
-    # print(f'prompt: {prompt}')
-    # print(f'history: {history}')
-    print(f'response 2: {response}')
 
     # Decode and return the response and history
-    return response.split("Assistant: \n")[-1].strip(), bot_input_ids
+    return response.split("Assistant: ")[-1].strip(), bot_input_ids
