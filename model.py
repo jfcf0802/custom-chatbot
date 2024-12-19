@@ -13,7 +13,7 @@ def get_conversation_response(prompt, history):
     if history==None:
         prompt = (
             f"### Instructions ###\n"
-            f"You are a helpful assistant called Blitzcrank (unless otherwise stated by the user). Answer the user's question or respond to their statement: {prompt}.\n"
+            f"You are a helpful assistant called The Smarty One (unless otherwise stated by the user). Answer the user's question or respond to their statement: {prompt}.\n"
             f"Start your response with 'Assistant: ' without restating the instructions.\n"
         )
     
