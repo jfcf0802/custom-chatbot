@@ -1,6 +1,7 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 import os
+import PyPDF2
 from werkzeug.utils import secure_filename
 
 # Set up the environment variable for HuggingFace and initialize the desired model.
@@ -17,7 +18,7 @@ conversation_model = AutoModelForCausalLM.from_pretrained(conversation_model_nam
 summarizer = pipeline('summarization', model=summarizer_model_name)
 # qa_pipeline = pipeline('question-answering', model=qa_model_name, tokenizer=qa_model_name)
 
-def get_conversation_response(prompt, history):
+def get_conversation_response(prompt, history, max_length=2000):
     if history==None:
         prompt = (
             f"### Instructions ###\n"
@@ -40,7 +41,7 @@ def get_conversation_response(prompt, history):
     response = conversation_model.generate(
         bot_input_ids, 
         attention_mask=attention_mask, 
-        max_length=1000, 
+        max_length=max_length, 
         pad_token_id=conversation_tokenizer.eos_token_id
     )
     
@@ -50,14 +51,15 @@ def get_conversation_response(prompt, history):
     return response.split("Assistant: ")[-1].strip(), bot_input_ids
 
 # Summarize the document with error handling
-def summarize_text(text, max_length=1000, min_length=50):
+def summarize_text(text, max_length=2000, min_length=50):
     # Ensure the input text is non-empty
     if not text.strip():
         return "The document is empty or contains unreadable content."
     
-    # HuggingFace models usually accept up to 1024 tokens; truncate if necessary
-    token_limit = 1024  # Adjust based on your model's limit
-    truncated_text = text[:token_limit]  # Truncate the text
+    # # HuggingFace models usually accept up to 1024 tokens; truncate if necessary
+    # token_limit = 1024  # Adjust based on your model's limit
+    # truncated_text = text[:token_limit]  # Truncate the text
+    truncated_text = text
 
     try:
         # Use the summarization model
@@ -71,6 +73,43 @@ def summarize_text(text, max_length=1000, min_length=50):
     except Exception as e:
         # Handle unexpected errors
         return f"An error occurred during summarization: {str(e)}"
+    
+# Extract text from pdf
+def extract_summarize_text(file_path, history):
+    # Extract text from PDF
+    with open(file_path, 'rb') as pdf_file:
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ''.join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
+
+    # Summarize the document
+    summary = summarize_text(text)
+    
+    if history==None:
+        prompt = (
+            f"### Instructions ###\n"
+            f"You are a helpful assistant called The Smarty One (unless otherwise stated by the user).\n"
+            f"The user uploaded a document containing: {text}.\n"
+            f"Answer the user's question or respond to their statement\n"
+            f"Start your response with 'Assistant: ' without restating the instructions.\n"
+        )
+    else:
+        prompt = (
+            f"### Instructions ###\n"
+            f"The user uploaded a document containing: {text}.\n"
+            f"Answer the user's question or respond to their statement\n"
+            f"Start your response with 'Assistant: ' without restating the instructions.\n"
+        )
+        
+    # Encode the input with an attention mask
+    input_ids = conversation_tokenizer.encode(prompt + conversation_tokenizer.eos_token, return_tensors="pt")
+        
+    # Combine with history if available
+    if history is not None:
+        bot_input_ids = torch.cat([history, input_ids], dim=-1)
+    else:
+        bot_input_ids = input_ids
+    
+    return(text, summary, bot_input_ids)
     
 # Helper function to check file type
 def allowed_file(filename, ALLOWED_EXTENSIONS):

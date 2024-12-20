@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Chatbot</title>
+    <style>
+        /* Basic CSS for styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+        }
+        #chat-container {
+            width: 60%;
+            margin: 0 auto;
+        }
+        #chat-log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            background-color: #1e1e1e;
+        }
+        .chat-bubble {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .user-message, .bot-message {
+            border-radius: 10px;
+            padding: 10px;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #4CAF50;
+            color: #ffffff;
+            margin-left: auto;
+        }
+        .bot-message {
+            background-color: #2196F3;
+            color: #ffffff;
+            margin-right: auto;
+        }
+        .chat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 10px;
+        }
+    </style>
+    <script>
+        async function sendMessage(event) {
+            if (event.key === 'Enter' || event.type === 'click') {
+                const message = document.getElementById("message").value;
+                if (!message.trim()) return;
+
+                const chatLog = document.getElementById("chat-log");
+
+                // Add user message to chat log
+                chatLog.innerHTML += `
+                    <div class="chat-bubble">
+                        <div class="user-message">${message}</div>
+                        <img src="/static/user-icon.png" class="chat-icon" alt="User">
+                    </div>
+                `;
+
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+
+                // Add bot message to chat log
+                chatLog.innerHTML += `
+                    <div class="chat-bubble">
+                        <img src="/static/chatbot-icon.png" class="chat-icon" alt="Bot">
+                        <div class="bot-message">${data.response}</div>
+                    </div>
+                `;
+
+                chatLog.scrollTop = chatLog.scrollHeight; // Scroll to the bottom
+                document.getElementById("message").value = ""; // Clear input field
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>Chatbot Interface</h1>
+        <div id="chat-log"></div>
+        <input type="text" id="message" placeholder="Type your message..." onkeypress="sendMessage(event)">
+        <button onclick="sendMessage(event)">Send</button>
+    </div>
+</body>
+</html>

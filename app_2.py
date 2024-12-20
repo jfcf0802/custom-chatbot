@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template, session
-from model_2 import get_conversation_response, summarize_text, allowed_file
+from model_2 import get_conversation_response, allowed_file, extract_summarize_text # , summarize_text
 from werkzeug.utils import secure_filename
-import PyPDF2
 import os
 
 app = Flask(__name__)
@@ -36,25 +35,36 @@ def chat():
 # Route for file upload and summarization
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    global conversation_history
+    
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
     if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
+        # filename = secure_filename(file.filename)
+        # file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        # file.save(file_path)
+
+        # # Extract text from PDF
+        # with open(file_path, 'rb') as pdf_file:
+        #     pdf_reader = PyPDF2.PdfReader(pdf_file)
+        #     text = ''.join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
+
+        # # Store the document text in the session
+        # session['document_text'] = text
+
+        # # Summarize the document
+        # summary = summarize_text(text)
+        
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-
-        # Extract text from PDF
-        with open(file_path, 'rb') as pdf_file:
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            text = ''.join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
-
+        
+        text, summary, conversation_history = extract_summarize_text(file_path, conversation_history)
+        
         # Store the document text in the session
         session['document_text'] = text
-
-        # Summarize the document
-        summary = summarize_text(text)
 
         return jsonify({'summary': summary}), 200
 
