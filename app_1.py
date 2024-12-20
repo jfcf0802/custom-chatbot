@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify, render_template
-from model import get_conversation_response
+from model_1 import get_conversation_response
 
 app = Flask(__name__)
 conversation_history = None
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index_1.html")
 
 @app.route("/chat", methods=["POST"])
 def chat():
