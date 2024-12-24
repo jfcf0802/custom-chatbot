@@ -22,21 +22,24 @@ def get_conversation_response(prompt, history, max_length=2024):
     
     # Encode the input with an attention mask
     input_ids = conversation_tokenizer.encode(prompt + conversation_tokenizer.eos_token, return_tensors="pt")
-    attention_mask = torch.ones_like(input_ids)
 
     # Combine with history if available
     if history is not None:
         bot_input_ids = torch.cat([history, input_ids], dim=-1)
-        attention_mask = torch.cat([torch.ones_like(history), attention_mask], dim=-1)
     else:
         bot_input_ids = input_ids
+        
+    attention_mask = torch.ones_like(bot_input_ids)
 
     # Generate the response
     response = conversation_model.generate(
         bot_input_ids, 
         attention_mask=attention_mask, 
         max_length=max_length, 
-        pad_token_id=conversation_tokenizer.eos_token_id
+        pad_token_id=conversation_tokenizer.eos_token_id,
+        do_sample=True,
+        temperature=0.8,
+        top_p=0.9
     )
     
     response = conversation_tokenizer.decode(response[:, bot_input_ids.shape[-1]:][0], skip_special_tokens=True)
@@ -79,7 +82,7 @@ def extract_summarize_text(file_path, history, max_length=2024, limit_file_text=
         attention_mask = torch.ones_like(bot_input_ids)
     else:
         bot_input_ids = input_ids
-        attention_mask = torch.ones_like(input_ids)
+        attention_mask = torch.ones_like(bot_input_ids)
     
     # Generate the response
     response = conversation_model.generate(
