@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, session
-from model_2 import get_conversation_response, allowed_file, extract_summarize_text # , summarize_text
+from model import get_conversation_response, allowed_file, extract_summarize_text
 from werkzeug.utils import secure_filename
 import os
 
@@ -7,7 +7,7 @@ app = Flask(__name__)
 conversation_history = None
 
 # Set a secret key for session management
-app.config['SECRET_KEY'] = 'cenas_key'
+app.config['SECRET_KEY'] = os.getenv("APP_KEY")
 
 # Set upload folder and allowed file types
 UPLOAD_FOLDER = './uploads'
@@ -17,7 +17,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Route to render the chat interface
 @app.route("/")
 def home():
-    return render_template("index_2.html")
+    return render_template("index.html")
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -28,7 +28,8 @@ def chat():
     if not user_input:
         return jsonify({"response": "Please provide a message."})
 
-    response, conversation_history = get_conversation_response(user_input, conversation_history)
+    response, conversation_history = get_conversation_response(
+        user_input, conversation_history)
 
     return jsonify({"response": response})
 
@@ -36,40 +37,25 @@ def chat():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     global conversation_history
-    
+
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
     if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
-        # filename = secure_filename(file.filename)
-        # file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        # file.save(file_path)
-
-        # # Extract text from PDF
-        # with open(file_path, 'rb') as pdf_file:
-        #     pdf_reader = PyPDF2.PdfReader(pdf_file)
-        #     text = ''.join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
-
-        # # Store the document text in the session
-        # session['document_text'] = text
-
-        # # Summarize the document
-        # summary = summarize_text(text)
-        
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        
-        text, summary, conversation_history = extract_summarize_text(file_path, conversation_history)
-        
+
+        text, summary, conversation_history = extract_summarize_text(
+            file_path, conversation_history)
+
         # Store the document text in the session
         session['document_text'] = text
 
         return jsonify({'summary': summary}), 200
 
     return jsonify({'error': 'Invalid file type'}), 400
-
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
